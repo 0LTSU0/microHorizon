@@ -1,0 +1,3 @@
+add_library(OSMProcessor OSMProcessor.cpp)
+
+target_include_directories(OSMProcessor PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/libosmium-2.20.0/include")
