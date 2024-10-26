@@ -1,6 +1,9 @@
 #include <iostream>
+#include "tracer.h"
+
+
 
 int main()
 {
-	std::cout << "Hello from microHorizonApp" << std::endl;
+	Tracer::log("Starting michroHorizonApp");
 }

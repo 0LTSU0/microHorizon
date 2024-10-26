@@ -1,4 +1,6 @@
 add_subdirectory(ThirdParty)
-add_subdirectory(OSMProcessor)
 
+add_subdirectory(Tracer)
+
+add_subdirectory(OSMProcessor)
 add_subdirectory(microHorizonApp)
