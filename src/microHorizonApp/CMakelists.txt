@@ -2,4 +2,4 @@ add_executable(microHorizonApp main.cpp)
 
 target_link_libraries(microHorizonApp OSMProcessor Tracer)
 
-target_include_directories(microHorizonApp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/libosmium-2.20.0/include")
+target_include_directories(microHorizonApp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../ThirdParty/libosmium-2.20.0/include")

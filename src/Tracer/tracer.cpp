@@ -31,7 +31,7 @@ void Tracer::log(const std::string& message) {
         toConsole(oss.str());
         break;
     case traceMode::TRACEFILE:
-        std::cout << "Tracing to file is not yet implemented. " << oss.str() << std::endl;
+        std::cout << "Tracing to file is not yet implemented! " << oss.str() << std::endl;
         break;
     default:
         break;
