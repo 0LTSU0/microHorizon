@@ -1,15 +1,21 @@
 #pragma once
 #include <string>
 
-class Tracer {
-    
+enum traceLevel {
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR
+};
+
+class Tracer {    
 public:
     enum traceMode {
         CONSOLE,
         TRACEFILE //to be implemented
     };
     
-    static void log(const std::string& message);
+    static void log(const std::string& message, traceLevel);
     static void changeTracingMode(Tracer::traceMode mode);
 
 private:

@@ -3,4 +3,5 @@ set(CMAKE_CXX_STANDARD 17)
 
 project(microHorizon)
 
+add_subdirectory(ThirdParty)
 add_subdirectory(src)
