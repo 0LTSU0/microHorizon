@@ -1,51 +1,56 @@
-#define NOMINMAX //fixes compilation errors from osmium
-
 #include "OSMProcessor.h"
-
-#include <osmium/io/reader.hpp>
-#include <osmium/io/pbf_input.hpp>
-#include <osmium/io/xml_input.hpp>
-#include <osmium/handler.hpp>
-#include <osmium/visitor.hpp>
-#include <osmium/osm/box.hpp>
-#include <osmium/osm/way.hpp>
-#include <osmium/index/map/flex_mem.hpp>
-#include <osmium/handler/node_locations_for_ways.hpp>
+#include "PosMatcherImpl.cpp"
 #include <iostream>
 
-//note to self, getting locations for nodes is kinda complicated, good example for that https://github.com/osmcode/libosmium/blob/cf81df16ddd2fbee6eede4e84978130419eef759/examples/osmium_road_length.cpp#L3
-using index_type = osmium::index::map::FlexMem<osmium::unsigned_object_id_type, osmium::Location>; //not sure what this does
-using location_handler_type = osmium::handler::NodeLocationsForWays<index_type>; //but this is needed to get valid locations on nodes
+void RoadLoader::way(const osmium::Way& way) {
+   // Check if the way has the "highway" tag (indicating a road)
+   const char* highway_tag = way.tags()["highway"];
+   if (highway_tag && std::string(highway_tag) != "path") { // TODO: check if paths need to be included.. https://wiki.openstreetmap.org/wiki/Key:highway#Paths -> probably not
+       // Check if any of the way's nodes are within the bounding box
+       for (const auto& node : way.nodes()) {
+           if (node.location().is_undefined())
+           {
+               Tracer::log("Node " + std::to_string(node.ref()) + " has no valid location", traceLevel::DEBUG);
+               continue;
+           }
+           if (m_box.contains(node.location())) {
+               Tracer::log("Inside rect --- Road ID: " + std::to_string(way.id()) + " (highway=" + highway_tag + ")", traceLevel::DEBUG);
+               std::vector<osmium::Location> road_nodes;
+               for (const auto& node : way.nodes()) {
+                   if (node.location().is_undefined()) {
+                       // in case this way had some undefined node location
+                       continue;
+                   }
+                   road_nodes.push_back(node.location());
+               }
 
-class RoadLoader : public osmium::handler::Handler {
-public:
-    RoadLoader(osmium::Box box) {
-        m_box = box;
+               RoadInfo road_info{
+                    way.id(),
+                    way.tags().get_value_by_key("name", "Unnamed Road"),
+                    highway_tag,
+                    road_nodes
+               };
+               m_currentlyLoadedWays.push_back(road_info);
+               break;
+           }
+       }
     }
-    
-    void way(const osmium::Way& way) {
-        // Check if the way has the "highway" tag (indicating a road)
-        const char* highway_tag = way.tags()["highway"];
-        if (highway_tag) {
-            // Check if any of the way's nodes are within the bounding box
-            for (const auto& node : way.nodes()) {
-                if (node.location().is_undefined())
-                {
-                    Tracer::log("Node " + std::to_string(node.ref()) + " has no valid location", traceLevel::DEBUG);
-                    continue;
-                }
-                if (m_box.contains(node.location())) {
-                    std::cout << "Inside rect --- Road ID: " << way.id()
-                        << " (highway=" << highway_tag << ")\n";
-                    break;
-                }
-            }
-        }
-    }
+}
 
-private:
-    osmium::Box m_box;
-};
+void RoadLoader::setBoudningBox(osmium::Box& box)
+{
+    m_box = box;
+}
+
+osmium::Box RoadLoader::getCurrentBoundingBox()
+{
+    return m_box;
+}
+
+void RoadLoader::resetLoadedData()
+{
+    m_currentlyLoadedWays.clear();
+}
 
 
 void OSMProcessor::loadRoadsAroundLoc(inputPosition& pos)
@@ -59,10 +64,11 @@ void OSMProcessor::loadRoadsAroundLoc(inputPosition& pos)
     index_type index;
     location_handler_type location_handler{ index };
 
-    RoadLoader loader(bounding_box);
+    //RoadLoader loader(bounding_box);
+    m_roadLoaderHandler.resetLoadedData();
     osmium::io::Reader reader(mapPath, osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
-    RoadLoader handler(bounding_box);
-    osmium::apply(reader, location_handler, handler);
+    m_roadLoaderHandler.setBoudningBox(bounding_box);
+    osmium::apply(reader, location_handler, m_roadLoaderHandler);
 }
 
 
@@ -76,6 +82,7 @@ bool OSMProcessor::init(MHConfigurator& configurator)
 bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
 {
 	Tracer::log("matchNewPosition() processing: " + std::to_string(inputPos.lat) + "," + std::to_string(inputPos.lon), traceLevel::DEBUG);
-    loadRoadsAroundLoc(inputPos);
+    loadRoadsAroundLoc(inputPos); // TODO: only do this if input pos is too close to endge of currently loaded area
+    bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler);
     return true;
 }

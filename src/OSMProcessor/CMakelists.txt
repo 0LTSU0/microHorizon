@@ -1,5 +1,6 @@
 add_library(OSMProcessor OSMProcessor.cpp
-						 OSMProcessor.h)
+						 OSMProcessor.h
+						 PosMatcherImpl.cpp)
 
 target_link_libraries(OSMProcessor PUBLIC Tracer zlibstatic expat)
 
