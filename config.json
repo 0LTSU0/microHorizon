@@ -1,3 +1,4 @@
 {
-	"mapPath": "Z:/finland-latest-highwaysonly.osm.pbf"
+	"mapPath": "Z:/finland-latest-highwaysonly.osm.pbf",
+	"posMode": "UDP"
 }

@@ -10,17 +10,30 @@ MHConfigurator appConfigurator;
 
 int main()
 {
-	Tracer::log("Starting michroHorizonApp", traceLevel::INFO);
+	Tracer::log("Starting michroHorizonApp", tracer::traceLevel::INFO);
 
-	appConfigurator.loadConfig();
+	if (!appConfigurator.loadConfig())
+	{
+		Tracer::log("loadConfig() failed, cannot start application", tracer::traceLevel::ERROR);
+		return -1;
+	}
 	
+
+	//someTestFunc();
+	std::cout << "exiting()" << std::endl;
+}
+
+
+// function to call in main() when need debug
+void someTestFunc()
+{
 	inputPosition pos;
 	pos.lat = 65.061673; //alakyläntie
 	pos.lon = 25.504593;
 
 	osmProcessor.init(appConfigurator);
 	osmProcessor.matchNewPosition(pos);
-	
+
 	pos.lat = 65.064451; // kerttulantie
 	pos.lon = 25.504145;
 	osmProcessor.matchNewPosition(pos);
@@ -42,6 +55,4 @@ int main()
 	pos.lat = 60.211827; // same pos as previously, should match since we waited for laoder to finish to Hämeenlinnanväylä
 	pos.lon = 24.901623;
 	osmProcessor.matchNewPosition(pos);
-
-	std::cout << "exiting()" << std::endl;
 }
