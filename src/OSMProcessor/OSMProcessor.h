@@ -51,7 +51,7 @@ class RoadLoader : public osmium::handler::Handler {
 public:
     void way(const osmium::Way& way);
     void setBoudningBox(osmium::Box& box);
-    osmium::Box RoadLoader::getCurrentBoundingBox();
+    osmium::Box getCurrentBoundingBox();
 
     std::vector<RoadInfo> getCurrentlyLoadedWays() {
         std::lock_guard<std::mutex> lock(roadInfoMtx);

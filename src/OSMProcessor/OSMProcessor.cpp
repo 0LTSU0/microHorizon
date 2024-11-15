@@ -97,6 +97,10 @@ bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
     if (!matchSuccess)
     {
         Tracer::log("Failed to match position " + inputPos.getInputPosString().str(), traceLevel::WARNING);
+        if (getOSMProcessorState() != OSMProcessorState::ROAD_LOADING_IN_PROGRESS)
+        {
+            setOSMProcessorState(OSMProcessorState::LOADED_ROADS_UPDATE_NEEDED); //If pos match failed and map loading is not in progress then we probably have somehow ended up outside currently lodaded area
+        }
     }
     return matchSuccess;
 }
