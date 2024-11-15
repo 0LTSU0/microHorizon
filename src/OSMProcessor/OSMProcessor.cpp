@@ -3,7 +3,7 @@
 #include <iostream>
 
 void RoadLoader::way(const osmium::Way& way) {
-   // Check if the way has the "highway" tag (indicating a road)
+   // For some reason in OSM data "highway" means any kind of road from footpath to motorway
    const char* highway_tag = way.tags()["highway"];
    if (highway_tag && std::string(highway_tag) != "path") { // TODO: check if paths need to be included.. https://wiki.openstreetmap.org/wiki/Key:highway#Paths -> probably not
        // Check if any of the way's nodes are within the bounding box
@@ -30,11 +30,11 @@ void RoadLoader::way(const osmium::Way& way) {
                     highway_tag,
                     road_nodes
                };
-               m_currentlyLoadedWays.push_back(road_info);
+               m_currentlyLoadedWaysTMP.push_back(road_info);
                break;
            }
        }
-    }
+   }
 }
 
 void RoadLoader::setBoudningBox(osmium::Box& box)
@@ -47,28 +47,25 @@ osmium::Box RoadLoader::getCurrentBoundingBox()
     return m_box;
 }
 
-void RoadLoader::resetLoadedData()
-{
-    m_currentlyLoadedWays.clear();
-}
-
 
 void OSMProcessor::loadRoadsAroundLoc(inputPosition& pos)
 {
-    float size = 0.01; //degrees around the wanted location
+    setOSMProcessorState(OSMProcessorState::ROAD_LOADING_IN_PROGRESS);
     osmium::Box bounding_box(
-        osmium::Location(pos.lon - size, pos.lat - size),
-        osmium::Location(pos.lon + size, pos.lat + size)
+        osmium::Location(pos.lon - loadSizeAroundPos, pos.lat - loadSizeAroundPos),
+        osmium::Location(pos.lon + loadSizeAroundPos, pos.lat + loadSizeAroundPos)
     );
     
     index_type index;
     location_handler_type location_handler{ index };
 
     //RoadLoader loader(bounding_box);
-    m_roadLoaderHandler.resetLoadedData();
     osmium::io::Reader reader(mapPath, osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
     m_roadLoaderHandler.setBoudningBox(bounding_box);
+    m_roadLoaderHandler.resetTMPRoadData();
     osmium::apply(reader, location_handler, m_roadLoaderHandler);
+    m_roadLoaderHandler.swapLoadedData();
+    setOSMProcessorState(OSMProcessorState::IDLE);
 }
 
 
@@ -82,9 +79,26 @@ bool OSMProcessor::init(MHConfigurator& configurator)
 bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
 {
 	Tracer::log("matchNewPosition() processing: " + std::to_string(inputPos.lat) + "," + std::to_string(inputPos.lon), traceLevel::DEBUG);
-    loadRoadsAroundLoc(inputPos); // TODO: only do this if input pos is too close to endge of currently loaded area
+    auto procState = getOSMProcessorState();
+    if (procState == OSMProcessorState::NOT_INITIALIZED || procState == OSMProcessorState::LOADED_ROADS_UPDATE_NEEDED) // TODO: set state=LOADED_ROADS_UPDATE_NEEDED when needed
+    {
+        Tracer::log("Triggering loadRoadsAroundLoc(), reason: " + std::to_string(procState), traceLevel::INFO);
+        startLoadRoadsThread(inputPos);
+    }
+
+    // state should only be NOT_INITIALIZED upon first input position -> wait for loader thread to finish before proceeding
+    // otherwise there should already be loaded data than can be used until roadLoader swaps it's m_currentlyLoadedWays
+    if (procState == OSMProcessorState::NOT_INITIALIZED)
+    {
+        waitForRoadLoaderThreadToFinish();
+    }
+
     bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler);
-    return true;
+    if (!matchSuccess)
+    {
+        Tracer::log("Failed to match position " + inputPos.getInputPosString().str(), traceLevel::WARNING);
+    }
+    return matchSuccess;
 }
 
 
