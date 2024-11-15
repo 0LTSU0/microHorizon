@@ -86,3 +86,15 @@ bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
     bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler);
     return true;
 }
+
+
+std::stringstream inputPosition::getInputPosString()
+{
+    std::stringstream ss;
+    ss << std::to_string(lat);
+    ss << ",";
+    ss << std::to_string(lon);
+    ss << ",";
+    ss << std::to_string(heading);
+    return ss;
+}

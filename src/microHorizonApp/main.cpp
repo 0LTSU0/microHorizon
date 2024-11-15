@@ -18,5 +18,6 @@ int main()
 
 	osmProcessor.init(appConfigurator);
 	osmProcessor.matchNewPosition(pos);
-	std::cout << "asd" << std::endl;
+
+	std::cout << "exiting()" << std::endl;
 }
