@@ -2,51 +2,6 @@
 #include "PosMatcherImpl.cpp"
 #include <iostream>
 
-void RoadLoader::way(const osmium::Way& way) {
-   // For some reason in OSM data "highway" means any kind of road from footpath to motorway
-   const char* highway_tag = way.tags()["highway"];
-   if (highway_tag && std::string(highway_tag) != "path") { // TODO: check if paths need to be included.. https://wiki.openstreetmap.org/wiki/Key:highway#Paths -> probably not
-       // Check if any of the way's nodes are within the bounding box
-       for (const auto& node : way.nodes()) {
-           if (node.location().is_undefined())
-           {
-               Tracer::log("Node " + std::to_string(node.ref()) + " has no valid location", traceLevel::DEBUG);
-               continue;
-           }
-           if (m_box.contains(node.location())) {
-               Tracer::log("Inside rect --- Road ID: " + std::to_string(way.id()) + " (highway=" + highway_tag + ")", traceLevel::DEBUG);
-               std::vector<osmium::Location> road_nodes;
-               for (const auto& node : way.nodes()) {
-                   if (node.location().is_undefined()) {
-                       // in case this way had some undefined node location
-                       continue;
-                   }
-                   road_nodes.push_back(node.location());
-               }
-
-               RoadInfo road_info{
-                    way.id(),
-                    way.tags().get_value_by_key("name", "Unnamed Road"),
-                    highway_tag,
-                    road_nodes
-               };
-               m_currentlyLoadedWaysTMP.push_back(road_info);
-               break;
-           }
-       }
-   }
-}
-
-void RoadLoader::setBoudningBox(osmium::Box& box)
-{
-    m_box = box;
-}
-
-osmium::Box RoadLoader::getCurrentBoundingBox()
-{
-    return m_box;
-}
-
 
 void OSMProcessor::loadRoadsAroundLoc(inputPosition& pos)
 {
@@ -76,6 +31,9 @@ bool OSMProcessor::init(MHConfigurator& configurator)
 }
 
 
+//TODO: There is currently a risk that startLoadRoadsThread() gets called tiwice if this function is called in quick succession since 
+//loadRoadsAroundLoc() thread might not have had time to change state to ROAD_LOADING_IN_PROGRESS by the time it gets triggered again
+//-> should redo this. It also doesnt start load on failed match now but only on the next position -> that will likely fail too
 bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
 {
 	Tracer::log("matchNewPosition() processing: " + std::to_string(inputPos.lat) + "," + std::to_string(inputPos.lon), traceLevel::DEBUG);
@@ -96,7 +54,7 @@ bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
     bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler);
     if (!matchSuccess)
     {
-        Tracer::log("Failed to match position " + inputPos.getInputPosString().str(), traceLevel::WARNING);
+        Tracer::log("Failed to match position " + inputPos.getInputPosString().str() + " settings state: LOADED_ROADS_UPDATE_NEEDED", traceLevel::WARNING);
         if (getOSMProcessorState() != OSMProcessorState::ROAD_LOADING_IN_PROGRESS)
         {
             setOSMProcessorState(OSMProcessorState::LOADED_ROADS_UPDATE_NEEDED); //If pos match failed and map loading is not in progress then we probably have somehow ended up outside currently lodaded area

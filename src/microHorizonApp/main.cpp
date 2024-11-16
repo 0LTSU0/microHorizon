@@ -1,31 +1,18 @@
-#include <iostream>
 #include "tracer.h"
 #include "OSMProcessor.h"
 #include "configurator.h"
 
+#include <iostream>
 #include <boost/thread.hpp>
+
+#undef ERROR // Some header defines some ERROR that conflicts with traceLevel::ERROR on windows -> workaround
 
 OSMProcessor osmProcessor;
 MHConfigurator appConfigurator;
 
-int main()
-{
-	Tracer::log("Starting michroHorizonApp", tracer::traceLevel::INFO);
 
-	if (!appConfigurator.loadConfig())
-	{
-		Tracer::log("loadConfig() failed, cannot start application", tracer::traceLevel::ERROR);
-		return -1;
-	}
-	
-
-	//someTestFunc();
-	std::cout << "exiting()" << std::endl;
-}
-
-
-// function to call in main() when need debug
-void someTestFunc()
+// temp function to debug stuff
+static void someTestFunc()
 {
 	inputPosition pos;
 	pos.lat = 65.061673; //alakyläntie
@@ -56,3 +43,21 @@ void someTestFunc()
 	pos.lon = 24.901623;
 	osmProcessor.matchNewPosition(pos);
 }
+
+
+int main()
+{
+	Tracer::log("Starting michroHorizonApp", traceLevel::INFO);
+
+	if (!appConfigurator.loadConfig())
+	{
+		Tracer::log("loadConfig() failed, cannot start application", traceLevel::ERROR);
+		return -1;
+	}
+	
+
+	someTestFunc();
+	std::cout << "exiting()" << std::endl;
+}
+
+

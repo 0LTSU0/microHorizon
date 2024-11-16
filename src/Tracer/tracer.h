@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-enum traceLevel {
+enum class traceLevel {
     DEBUG,
     INFO,
     WARNING,
