@@ -2,3 +2,4 @@ add_subdirectory(Tracer)
 
 add_subdirectory(OSMProcessor)
 add_subdirectory(microHorizonApp)
+add_subdirectory(PositionReceiver)

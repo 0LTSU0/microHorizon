@@ -1,8 +1,6 @@
 #include "configurator.h"
 #include <fstream>
 
-using nlohmann::json;
-
 bool MHConfigurator::loadConfig()
 {
 	Tracer::log("loadConfig()", traceLevel::DEBUG);
@@ -20,10 +18,18 @@ bool MHConfigurator::loadConfig()
 	if (conf["posMode"].get<std::string>() == "UDP")
 	{
 		c_posMode = POSMode::UDP;
+		if (!loadUDPSpecificConfs(conf))
+		{
+			return false;
+		}
 	}
 	else if (conf["posMode"].get<std::string>() == "GPS")
 	{
 		c_posMode = POSMode::GPS_RECEIVER;
+		if (!loadGPSSpecificConfs(conf))
+		{
+			return false;
+		}
 	}
 	else
 	{
@@ -41,4 +47,31 @@ std::string MHConfigurator::getMapPath()
 POSMode MHConfigurator::getPosMode()
 {
 	return c_posMode;
+}
+
+int MHConfigurator::getUDPPort()
+{
+	return c_udpPort;
+}
+
+bool MHConfigurator::loadUDPSpecificConfs(json& conf)
+{
+	if (!conf.contains("UDPPosPort"))
+	{
+		return false;
+	}
+	try {
+		c_udpPort = conf["UDPPosPort"].get<int>();
+	}
+	catch (const json::type_error& e)
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+bool MHConfigurator::loadGPSSpecificConfs(json& conf)
+{
+	return false; //todo when implementing gps receiver support
 }

@@ -1,4 +1,5 @@
 {
 	"mapPath": "Z:/finland-latest-highwaysonly.osm.pbf",
-	"posMode": "UDP"
+	"posMode": "UDP",
+	"UDPPosPort": "aset"
 }

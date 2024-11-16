@@ -54,6 +54,8 @@ int main()
 		Tracer::log("loadConfig() failed, cannot start application", traceLevel::ERROR);
 		return -1;
 	}
+
+	osmProcessor.init(appConfigurator);
 	
 
 	someTestFunc();
