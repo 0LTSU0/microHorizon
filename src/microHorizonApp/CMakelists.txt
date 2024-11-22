@@ -1,6 +1,7 @@
 add_executable(microHorizonApp main.cpp
 							   configurator.cpp
-							   configurator.h)
+							   configurator.h
+							   posInput.h)
 
 target_link_libraries(microHorizonApp PUBLIC OSMProcessor Tracer PositionReceiver ${Boost_LIBRARIES})
 

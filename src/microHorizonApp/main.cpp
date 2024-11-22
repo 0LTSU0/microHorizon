@@ -1,6 +1,8 @@
 #include "tracer.h"
 #include "OSMProcessor.h"
 #include "configurator.h"
+#include "PosReceiver.h"
+#include "posInput.h"
 
 #include <iostream>
 #include <boost/thread.hpp>
@@ -9,7 +11,7 @@
 
 OSMProcessor osmProcessor;
 MHConfigurator appConfigurator;
-
+PosReceiver positionReceiver;
 
 // temp function to debug stuff
 static void someTestFunc()
@@ -56,9 +58,19 @@ int main()
 	}
 
 	osmProcessor.init(appConfigurator);
-	
+	positionReceiver.initPosReceiver(appConfigurator);
+	positionReceiver.startPosReceiver();
 
-	someTestFunc();
+	//someTestFunc();
+	int ctr = 0;
+	while (ctr < 10)
+	{
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+		inputPosition inPos = positionReceiver.getCurrentPosition();
+		Tracer::log("Current position is: " + std::to_string(inPos.lat) + "," + std::to_string(inPos.lon), traceLevel::DEBUG);
+		ctr++;
+	}
+	
 	std::cout << "exiting()" << std::endl;
 }
 

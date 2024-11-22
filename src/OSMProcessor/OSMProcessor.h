@@ -3,6 +3,7 @@
 #include "tracer.h"
 #include "configurator.h"
 #include "RoadLoader.h"
+#include "posInput.h"
 
 #include <atomic>
 #include <mutex>
@@ -16,14 +17,6 @@ enum OSMProcessorState
     IDLE,
     LOADED_ROADS_UPDATE_NEEDED,
     ROAD_LOADING_IN_PROGRESS
-};
-
-class inputPosition {
-public:
-	float lat;
-	float lon;
-    float heading = 0.0;
-    std::stringstream getInputPosString();
 };
 
 class OSMProcessor {
