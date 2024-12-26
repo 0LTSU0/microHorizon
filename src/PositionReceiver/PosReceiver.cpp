@@ -37,10 +37,12 @@ bool PosReceiver::startPosReceiver()
 
 void PosReceiver::setNewCurrentPosition(inputPosition& newPos)
 {
-	m_currentPosition = newPos; //todo add mutex for updating/reading this
+	std::lock_guard<std::mutex> lock(posLock);
+	m_currentPosition = newPos;
 }
 
 inputPosition PosReceiver::getCurrentPosition()
 {
-	return m_currentPosition; //todo add mutex for updating/reading this
+	std::lock_guard<std::mutex> lock(posLock);
+	return m_currentPosition;
 }

@@ -47,6 +47,22 @@ static void someTestFunc()
 }
 
 
+void udpWorkLoop(PosReceiver &posReceiver)
+{
+	inputPosition prevPos;
+	while (true)
+	{
+		inputPosition currPos = positionReceiver.getCurrentPosition();
+		if (currPos != prevPos)
+		{
+			osmProcessor.matchNewPosition(currPos);
+			prevPos = currPos;
+		}
+		boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+	}
+}
+
+
 int main()
 {
 	Tracer::log("Starting michroHorizonApp", traceLevel::INFO);
@@ -62,14 +78,15 @@ int main()
 	positionReceiver.startPosReceiver();
 
 	//someTestFunc();
-	int ctr = 0;
-	while (ctr < 10)
-	{
-		boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
-		inputPosition inPos = positionReceiver.getCurrentPosition();
-		Tracer::log("Current position is: " + std::to_string(inPos.lat) + "," + std::to_string(inPos.lon), traceLevel::DEBUG);
-		ctr++;
-	}
+	//int ctr = 0;
+	//while (ctr < 10)
+	//{
+	//	boost::this_thread::sleep_for(boost::chrono::milliseconds(1000));
+	//	inputPosition inPos = positionReceiver.getCurrentPosition();
+	//	osmProcessor.matchNewPosition(inPos);
+	//	ctr++;
+	//}
+	udpWorkLoop(positionReceiver);
 	
 	std::cout << "exiting()" << std::endl;
 }

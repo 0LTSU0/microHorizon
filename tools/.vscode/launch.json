@@ -1,0 +1,16 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "plist_to_udp_sender.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "plist_to_udp_sender.py",
+            "console": "integratedTerminal",
+            "args": ["--port", "12364", "--host", "127.0.0.1", "--file", "test_data/10-27 18-29.plist", "--mode", "manual"]
+        }
+    ]
+}

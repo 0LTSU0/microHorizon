@@ -6,7 +6,7 @@
 #include "posInput.h"
 
 #include "boost/thread.hpp"
-
+#include <mutex>
 
 
 class PosReceiver
@@ -22,4 +22,5 @@ private:
 	UDPPositioner m_udpPos = UDPPositioner(0);
 	boost::thread m_posThread;
 	inputPosition m_currentPosition;
+	std::mutex posLock;
 };

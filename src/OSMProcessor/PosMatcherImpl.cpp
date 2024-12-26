@@ -17,6 +17,25 @@ double toRadians(double degree) {
 	return degree * (std::numbers::pi / 180.0);
 }
 
+double haversineDistance(double lat1, double lon1, double lat2, double lon2) { //from chatGPT
+	const double R = 6371000; // Earth's radius in meters
+
+	double lat1_rad = toRadians(lat1);
+	double lon1_rad = toRadians(lon1);
+	double lat2_rad = toRadians(lat2);
+	double lon2_rad = toRadians(lon2);
+
+	double dlat = lat2_rad - lat1_rad;
+	double dlon = lon2_rad - lon1_rad;
+
+	double a = std::sin(dlat / 2) * std::sin(dlat / 2) +
+		std::cos(lat1_rad) * std::cos(lat2_rad) *
+		std::sin(dlon / 2) * std::sin(dlon / 2);
+	double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1 - a));
+
+	return R * c; // Distance in meters
+}
+
 // TODO: come up with better logic for determening if some road is reasonable choise
 // Check if node is less than 300m away from input position (using haversine)
 bool checkIfSegmentIsRealisticChoise(inputPosition& inputPos, Point& testLoc)
@@ -67,7 +86,10 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 				nearestDistance = distance;
 				nearestRoad = road;
 				matchSuccessfull = true;
-				Tracer::log("Nearest road to target position is now: " + nearestRoad.name + " id: " + std::to_string(nearestRoad.id), traceLevel::DEBUG);
+				if (road.id != nearestRoad.id)
+				{
+					Tracer::log("Nearest road to target position is now: " + nearestRoad.name + " id: " + std::to_string(nearestRoad.id), traceLevel::DEBUG);
+				}
 			}
 		}
 		else
@@ -81,10 +103,12 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 					continue; //at least this node in this road is too far away -> check next segment
 				}
 				Segment seg(segPoint1, segPoint2);
-				double distance = boost::geometry::distance(inputPosPoint, seg);
-				if (distance < nearestDistance)
+				Segment resSeg;
+				boost::geometry::closest_points(inputPosPoint, seg, resSeg); //resSeg.second is the point on segement that is closest to current input position
+				double haversineDist = haversineDistance(boost::geometry::get<0>(resSeg.first), boost::geometry::get<1>(resSeg.first), boost::geometry::get<0>(resSeg.second), boost::geometry::get<1>(resSeg.second));
+				if (haversineDist < nearestDistance)
 				{
-					nearestDistance = distance;
+					nearestDistance = haversineDist;
 					nearestRoad = road;
 					matchSuccessfull = true;
 					Tracer::log("Nearest road to target position is now: " + nearestRoad.name + " id: " + std::to_string(nearestRoad.id), traceLevel::DEBUG);
