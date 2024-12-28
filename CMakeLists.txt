@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.25)
 set(CMAKE_CXX_STANDARD 20)
 
 project(microHorizon)
@@ -33,14 +33,21 @@ project(microHorizon)
 
 
 
-#Note to self, to build/install from source
+#Note to self, to build/install from source on windows.
 #1. Run bootstrap.sh or bootstrap.bat in boost src dir
 #2. Run b2.exe or b2 created by step 1
 #3. Run b2.exe/b2 install --prefix=<pathto/install/dir> (cant be "install" btw because there is a file called INSTALL)
+#Or for linux just do: sudo apt install libboost-all-dev (probably works if version in apt happens to be somewhere around 1.8x)
+if (WIN32)
 set(BOOST_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/boost-1.86.0/installation" CACHE PATH "Path to Boost install dir")
 message(STATUS "Trying to find boost installation from: " ${BOOST_INSTALL_DIR})
 set(BOOST_ROOT ${BOOST_INSTALL_DIR})
-find_package(Boost REQUIRED COMPONENTS thread)
+#else()
+#set(BOOST_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/boost-1.86.0/installation_linux64" CACHE PATH "Path to Boost install dir")
+#message(STATUS "Trying to find boost installation from: " ${BOOST_INSTALL_DIR})
+#set(BOOST_ROOT ${BOOST_INSTALL_DIR})
+endif()
+find_package(Boost REQUIRED COMPONENTS chrono thread)
 if(NOT Boost_FOUND)
 	message(FATAL_ERROR "Boost libraries not found. Please install them, I can't get them to be built as part of the project :(")
 else()
