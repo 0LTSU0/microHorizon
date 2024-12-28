@@ -27,6 +27,7 @@ void OSMProcessor::loadRoadsAroundLoc(inputPosition& pos)
 bool OSMProcessor::init(MHConfigurator& configurator)
 {
 	mapPath = configurator.getMapPath();
+    loadSizeAroundPos = configurator.getLoadRadius();
 	return true;
 }
 

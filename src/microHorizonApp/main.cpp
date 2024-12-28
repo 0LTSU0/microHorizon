@@ -63,11 +63,34 @@ void udpWorkLoop(PosReceiver &posReceiver)
 }
 
 
-int main()
+cmdArgs parseCMDArgs(int argc, char* argv[])
+{
+	cmdArgs args;
+	std::string currArg;
+	std::string searchStr;
+	for (int i = 0; i < argc; i++)
+	{
+		currArg = argv[i];
+		
+		searchStr = "cfg=";
+		auto findPos = currArg.find(searchStr);
+		if (findPos != std::string::npos)
+		{
+			args.configPath = currArg.substr(findPos + searchStr.length());
+		}
+		searchStr = "someOtherArg"; // TODO: other args if necessary
+	}
+	return args;
+}
+
+
+int main(int argc, char* argv[])
 {
 	Tracer::log("Starting michroHorizonApp", traceLevel::INFO);
 
-	if (!appConfigurator.loadConfig())
+	cmdArgs args = parseCMDArgs(argc, argv);
+
+	if (!appConfigurator.loadConfig(args.configPath))
 	{
 		Tracer::log("loadConfig() failed, cannot start application", traceLevel::ERROR);
 		return -1;

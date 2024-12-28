@@ -1,10 +1,30 @@
 #include "configurator.h"
 #include <fstream>
+#include <filesystem>
 
-bool MHConfigurator::loadConfig()
+bool MHConfigurator::loadConfig(std::string &confPath)
 {
 	Tracer::log("loadConfig()", traceLevel::DEBUG);
-	std::ifstream ifs("C:/Users/lauri/Desktop/microHorizon/config.json"); //TODO: read from runtime dir by default or cmd argument
+	
+	std::ifstream ifs;
+	if (confPath.empty())
+	{
+		Tracer::log("loadConfig(): No config path given as cmd argument -> trying to read from current working dir", traceLevel::INFO);
+		std::filesystem::path pth = std::filesystem::current_path();
+		pth = pth / "config.json";
+		ifs.open(pth);
+	}
+	else 
+	{
+		Tracer::log("loadConfig(): Trying to read config file from: " + confPath, traceLevel::INFO);
+		ifs.open(confPath);
+	}
+	
+	if (!ifs.is_open())
+	{
+		Tracer::log("Failed to open config file", traceLevel::ERROR);
+		return false;
+	}
 	json conf = json::parse(ifs);
 	if (!conf.contains("mapPath") || !conf.contains("posMode")) //TODO: use json schema
 	{
@@ -13,6 +33,12 @@ bool MHConfigurator::loadConfig()
 
 	// map path
 	c_mapPath = conf["mapPath"].get<std::string>();
+
+	//loadRadius (this is optional, defaults to tiny 0.5 degrees)
+	if (conf.contains("loadRadius"))
+	{
+		c_loadRadius = conf["loadRadius"].get<float>();
+	}
 
 	// positioning mode
 	if (conf["posMode"].get<std::string>() == "UDP")
@@ -42,6 +68,11 @@ bool MHConfigurator::loadConfig()
 std::string MHConfigurator::getMapPath()
 {
 	return c_mapPath;
+}
+
+float MHConfigurator::getLoadRadius()
+{
+	return c_loadRadius;
 }
 
 POSMode MHConfigurator::getPosMode()

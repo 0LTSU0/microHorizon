@@ -17,7 +17,7 @@ double toRadians(double degree) {
 	return degree * (std::numbers::pi / 180.0);
 }
 
-double haversineDistance(double lat1, double lon1, double lat2, double lon2) { //from chatGPT
+double haversineDistance(double lat1, double lon1, double lat2, double lon2) { //from chatGPT. Returns distance between two coordinates in meters
 	const double R = 6371000; // Earth's radius in meters
 
 	double lat1_rad = toRadians(lat1);
@@ -40,20 +40,8 @@ double haversineDistance(double lat1, double lon1, double lat2, double lon2) { /
 // Check if node is less than 300m away from input position (using haversine)
 bool checkIfSegmentIsRealisticChoise(inputPosition& inputPos, Point& testLoc)
 {
-	const double R = 6371.0; // Radius of the Earth in kilometers
-
-	double testLat = boost::geometry::get<0>(testLoc);
-	double testLon = boost::geometry::get<1>(testLoc);
-	const double dLat = toRadians(testLat - inputPos.lat);
-	const double dLon = toRadians(testLon - inputPos.lon);
-	const double cLat1 = toRadians(inputPos.lat);
-	const double cLat2 = toRadians(testLat);
-
-	const double a = pow(sin(dLat / 2), 2) + cos(cLat1) * cos(cLat2) * pow(sin(dLon / 2), 2);
-	const auto c = 2 * atan2(sqrt(a), sqrt(1 - a));
-
-	double dist = R * c;
-	return dist < 0.3;
+	auto dist = haversineDistance(inputPos.lat, inputPos.lon, boost::geometry::get<0>(testLoc), boost::geometry::get<1>(testLoc));
+	return dist < 300;
 }
 
 
@@ -73,7 +61,7 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 		{
 			continue;
 		}
-		else if (road.nodes.size() == 1)
+		else if (road.nodes.size() == 1) //TODO: this should use the same haversine logic as roads with multiple nodes below
 		{
 			Point roadNode(road.nodes.at(0).lat(), road.nodes[0].lon());
 			if (!checkIfSegmentIsRealisticChoise(inputPos, roadNode))
