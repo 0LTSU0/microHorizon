@@ -92,7 +92,6 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 				}
 				Segment seg(segPoint1, segPoint2);
 				Segment resSeg;
-				boost::geometry::closest_points(inputPosPoint, seg, resSeg); //resSeg.second is the point on segement that is closest to current input position
 				double haversineDist = haversineDistance(boost::geometry::get<0>(resSeg.first), boost::geometry::get<1>(resSeg.first), boost::geometry::get<0>(resSeg.second), boost::geometry::get<1>(resSeg.second));
 				if (haversineDist < nearestDistance)
 				{

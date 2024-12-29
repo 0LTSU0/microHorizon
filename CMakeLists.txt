@@ -31,7 +31,14 @@ project(microHorizon)
 #set(Boost_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/boost_install/lib)
 #add_dependencies(microHorizon Boost)
 
-
+#If we're on linux, check if arm to enable some compiler options to prevent compiler from crashing on raspiZero
+if (NOT WIN32)
+	EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
+	message( STATUS "Architecture: ${ARCHITECTURE}" )
+	if (${ARCHITECTURE} STREQUAL "aarch64" OR ${ARCHITECTURE} STREQUAL "arm")
+		message(STATUS "Do some arm specific things")
+	endif()
+endif()
 
 #Note to self, to build/install from source on windows.
 #1. Run bootstrap.sh or bootstrap.bat in boost src dir
