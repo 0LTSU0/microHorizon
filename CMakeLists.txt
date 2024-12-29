@@ -31,7 +31,7 @@ project(microHorizon)
 #set(Boost_LIBRARY_DIRS ${CMAKE_BINARY_DIR}/boost_install/lib)
 #add_dependencies(microHorizon Boost)
 
-#If we're on linux, check if arm to enable some compiler options to prevent compiler from crashing on raspiZero
+#If we're on linux, check if arm to enable some compiler options to prevent compiler from crashing on raspiZero (doesn't work and still crashes)
 if (NOT WIN32)
 	EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE )
 	message( STATUS "Architecture: ${ARCHITECTURE}" )
