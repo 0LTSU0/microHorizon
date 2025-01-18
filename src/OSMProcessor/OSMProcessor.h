@@ -22,7 +22,7 @@ enum OSMProcessorState
 class OSMProcessor {
 public:
 	bool init(MHConfigurator&);
-	bool matchNewPosition(inputPosition&);
+	bool matchNewPosition(inputPosition&, bool);
 	void loadRoadsAroundLoc(inputPosition& pos);
 
 	RoadLoader m_roadLoaderHandler = RoadLoader();

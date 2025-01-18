@@ -35,7 +35,7 @@ bool OSMProcessor::init(MHConfigurator& configurator)
 //TODO: There is currently a risk that startLoadRoadsThread() gets called tiwice if this function is called in quick succession since 
 //loadRoadsAroundLoc() thread might not have had time to change state to ROAD_LOADING_IN_PROGRESS by the time it gets triggered again
 //-> should redo this. It also doesnt start load on failed match now but only on the next position -> that will likely fail too
-bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
+bool OSMProcessor::matchNewPosition(inputPosition& inputPos, bool writeDebugDumps)
 {
 	Tracer::log("matchNewPosition() processing: " + std::to_string(inputPos.lat) + "," + std::to_string(inputPos.lon), traceLevel::DEBUG);
     auto procState = getOSMProcessorState();
@@ -52,7 +52,7 @@ bool OSMProcessor::matchNewPosition(inputPosition& inputPos)
         waitForRoadLoaderThreadToFinish();
     }
 
-    bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler);
+    bool matchSuccess = matchPosition(inputPos, &m_roadLoaderHandler, writeDebugDumps);
     if (!matchSuccess)
     {
         Tracer::log("Failed to match position " + inputPos.getInputPosString().str() + " settings state: LOADED_ROADS_UPDATE_NEEDED", traceLevel::WARNING);

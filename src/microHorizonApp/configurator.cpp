@@ -62,6 +62,12 @@ bool MHConfigurator::loadConfig(std::string &confPath)
 		return false;
 	}
 
+	// writeDebugDumps. When on, e.g. position matcher writes some debuug jsons with candidates for debugging. Default False
+	if (conf.contains("writeDebugDumps"))
+	{
+		c_writeDebugDumps = conf["writeDebugDumps"].get<bool>();
+	}
+
 	return true;
 }
 
@@ -83,6 +89,11 @@ POSMode MHConfigurator::getPosMode()
 int MHConfigurator::getUDPPort()
 {
 	return c_udpPort;
+}
+
+bool MHConfigurator::getWriteDebugDumps()
+{
+	return c_writeDebugDumps;
 }
 
 bool MHConfigurator::loadUDPSpecificConfs(json& conf)

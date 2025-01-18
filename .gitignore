@@ -1,3 +1,6 @@
 build
+build_wsl
+build_aarch64
+boost_aarch64
 config_wsl.json
 ThirdParty/boost-1.86.0

@@ -1,10 +1,15 @@
 #include "OSMProcessor.h"
 #include <cmath>
 #include <numbers>
+#include <set>
+#include <fstream>
 #include "tracer.h"
 #include <boost/geometry/geometry.hpp>
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
+#include "json.hpp"
+
+using nlohmann::json;
 
 // TODO: not sure if using boost geometry lib causes a lot of overhead but since everything is quite simple here, 
 // could possible make sense to reimplement without boost
@@ -44,14 +49,45 @@ bool checkIfSegmentIsRealisticChoise(inputPosition& inputPos, Point& testLoc)
 	return dist < 300;
 }
 
+void writeDebugJson(std::vector<RoadInfo>& candidates, RoadInfo& chosenRoad, inputPosition& inputPos)
+{
+	json debugData;
+	debugData["posLat"] = inputPos.lat;
+	debugData["posLon"] = inputPos.lon;
+	debugData["nearestRoadId"] = chosenRoad.id;
+	debugData["nearestRoadName"] = chosenRoad.name;
+	json candidateArray = json::array();
+	for (auto& road : candidates)
+	{
+		json roadObj;
+		roadObj["id"] = road.id;
+		roadObj["name"] = road.name;
+		json nodeArray = json::array();
+		for (auto& node : road.nodes)
+		{
+			nodeArray.push_back({ node.lat(), node.lon() });
+		}
+		roadObj["nodes"] = nodeArray;
+		candidateArray.push_back(roadObj);
+	}
+	debugData["candidates"] = candidateArray;
+	//std::cout << debugData.dump(4) << std::endl;
+	std::ofstream outFile("output.json");
+	if (outFile.is_open()) {
+		outFile << debugData.dump(4);
+		outFile.close();
+	}
+}
 
-bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
+bool matchPosition(inputPosition& inputPos, RoadLoader *handler, bool writeMatchingDebugDumps)
 {
 	RoadInfo nearestRoad;
 	double nearestDistance = 99999999;
 	Point inputPosPoint(inputPos.lat, inputPos.lon);
 	Tracer::log("Starting matchPosition(). Input pos: " + inputPos.getInputPosString().str(), traceLevel::INFO);
 	bool matchSuccessfull = false; //Doesn't really tell if it actually was successfull but if true then there was something in 300m range
+	std::vector<RoadInfo> candidates;
+	std::set<int> candidateIds;
 
 	//this now just finds the closest road based on which has segment closest to input pos
 	//should instead find couple candidates and from those choose the most probable one (heading etc.)
@@ -90,12 +126,19 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 				{
 					continue; //at least this node in this road is too far away -> check next segment
 				}
-				Segment seg(segPoint1, segPoint2);
-				Segment resSeg;
-				double haversineDist = haversineDistance(boost::geometry::get<0>(resSeg.first), boost::geometry::get<1>(resSeg.first), boost::geometry::get<0>(resSeg.second), boost::geometry::get<1>(resSeg.second));
-				if (haversineDist < nearestDistance)
+				if (candidateIds.find(road.id) == candidateIds.end())
 				{
-					nearestDistance = haversineDist;
+					candidateIds.insert(road.id);
+					candidates.push_back(road);
+
+				}
+				Segment seg(segPoint1, segPoint2);
+				double dist = boost::geometry::distance(seg, Point(inputPos.lat, inputPos.lon));
+				//Segment resSeg;
+				//double haversineDist = haversineDistance(boost::geometry::get<0>(resSeg.first), boost::geometry::get<1>(resSeg.first), boost::geometry::get<0>(resSeg.second), boost::geometry::get<1>(resSeg.second));
+				if (dist < nearestDistance)
+				{
+					nearestDistance = dist;
 					nearestRoad = road;
 					matchSuccessfull = true;
 					Tracer::log("Nearest road to target position is now: " + nearestRoad.name + " id: " + std::to_string(nearestRoad.id), traceLevel::DEBUG);
@@ -104,5 +147,13 @@ bool matchPosition(inputPosition& inputPos, RoadLoader *handler)
 		}
 
 	}
+
+	if (writeMatchingDebugDumps)
+	{
+		writeDebugJson(candidates, nearestRoad, inputPos);
+	}
+
 	return matchSuccessfull;
 }
+
+

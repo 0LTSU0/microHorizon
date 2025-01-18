@@ -24,12 +24,14 @@ public:
 	POSMode getPosMode();
 	int getUDPPort();
 	float getLoadRadius();
+	bool getWriteDebugDumps();
 
 private:
 	std::string c_mapPath = "";
 	POSMode c_posMode = POSMode::UDP;
 	int c_udpPort = 0;
 	float c_loadRadius = 0.5; //radius in degrees (latlon) that is loaded around requested coordinates by OSMProcessor
+	bool c_writeDebugDumps = false;
 
 	bool loadUDPSpecificConfs(json& conf);
 	bool loadGPSSpecificConfs(json& conf);

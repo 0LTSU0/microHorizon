@@ -2,5 +2,6 @@
 	"mapPath": "Z:/finland-latest-highwaysonly.osm.pbf",
 	"posMode": "UDP",
 	"UDPPosPort": 12364,
-	"loadRadius": 2
+	"loadRadius": 2,
+	"writeDebugDumps": true
 }
