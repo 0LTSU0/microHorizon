@@ -7,6 +7,8 @@
 #include <limits>
 #include "tracer.h"
 #include "json.hpp"
+#include "iostream"
+#include <boost/thread.hpp>
 
 using nlohmann::json;
 
@@ -45,28 +47,62 @@ double pointToSegmentDistance(const inputPosition& p, const Segment& seg) {
 }
 
 
-bool matchPosition(const inputPosition& inputPos, RoadLoader* handler, bool writeMatchingDebugDumps)
+void findClosestRoadFromSet(const inputPosition& inputPos, const std::vector<RoadInfo>& roadNetwork, int start_idx, int end_idx, RoadInfo& RoadRes, double& DistRes, int thread)
 {
-	auto roadNetwork = handler->getCurrentlyLoadedWays();
 	double minDist = std::numeric_limits<double>::max();
 	Segment currSeg;
-	RoadInfo closestRoad;
-
-	for (const auto& road : roadNetwork)
+	for (int i = start_idx; i < end_idx; i++)
 	{
+		const auto road = roadNetwork[i];
 		for (size_t i = 0; i < road.nodes.size() - 1; i++)
 		{
 			currSeg.start = { road.nodes[i].lat(), road.nodes[i].lon() };
-			currSeg.end = { road.nodes[i+1].lat(), road.nodes[i+1].lon() };
+			currSeg.end = { road.nodes[i + 1].lat(), road.nodes[i + 1].lon() };
 			double d = pointToSegmentDistance(inputPos, currSeg);
 			if (d < minDist)
 			{
-				closestRoad = road;
 				minDist = d;
-				Tracer::log("Closest road is: " + closestRoad.name + " | dist: " + std::to_string(d), traceLevel::DEBUG);
+				RoadRes = road;
+				DistRes = minDist;
+				Tracer::log("Closest road is: " + RoadRes.name + " | dist: " + std::to_string(d) + " | th: " + std::to_string(thread), traceLevel::DEBUG);
 			}
 		}
 	}
-	//std::cout << "Closest road is: " + closestRoad.name << std::endl;
+}
+
+
+bool matchPosition(const inputPosition& inputPos, RoadLoader* handler, bool writeMatchingDebugDumps)
+{
+	auto roadNetwork = handler->getCurrentlyLoadedWays();
+	RoadInfo closestRoad;
+	double nearestDistance;
+
+	auto start = std::chrono::high_resolution_clock::now();
+	// When we have largeish map loaded into memory, multithread this (NVM it dont work)
+	if (roadNetwork.size() > 50000 && false)
+	{
+		int numItemsPerThread = static_cast<int>(roadNetwork.size() / 2);
+		RoadInfo closestRoad1, closestRoad2;
+		double nearestDistance1 = 0.0;
+		double nearestDistance2 = 0.0;
+		boost::thread thread1(findClosestRoadFromSet, inputPos, roadNetwork, 0, numItemsPerThread, closestRoad1, nearestDistance1, 0);
+		boost::thread thread2(findClosestRoadFromSet, inputPos, roadNetwork, numItemsPerThread, roadNetwork.size(), closestRoad2, nearestDistance2, 1);
+		thread1.join();
+		thread2.join();
+		if (nearestDistance1 < nearestDistance2)
+		{
+			nearestDistance = nearestDistance1;
+			closestRoad = closestRoad1;
+		}
+		else {
+			nearestDistance = nearestDistance2;
+			closestRoad = closestRoad2;
+		}
+	}
+	else {
+		findClosestRoadFromSet(inputPos, roadNetwork, 0, roadNetwork.size(), closestRoad, nearestDistance, 0);
+	}
+	std::chrono::duration<double, std::milli> duration = std::chrono::high_resolution_clock::now() - start;
+	Tracer::log("Closest road is: " + closestRoad.name + " | dist: " + std::to_string(nearestDistance) + " | took: " + std::to_string(duration.count()) + "ms", traceLevel::DEBUG);
 	return true;
 }
