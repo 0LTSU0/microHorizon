@@ -1,5 +1,5 @@
 #include "OSMProcessor.h"
-#include "PosMatcherImpl.cpp"
+#include "PosMatcherImpl.h"
 #include <iostream>
 
 

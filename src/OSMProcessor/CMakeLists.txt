@@ -2,6 +2,7 @@ add_library(OSMProcessor OSMProcessor.cpp
 						 OSMProcessor.h
 						 RoadLoader.cpp
 						 RoadLoader.h
+						 PosMatcherImpl.h
 						 PosMatcherImpl.cpp)
 
 target_link_libraries(OSMProcessor PUBLIC Tracer zlibstatic expat ${Boost_LIBRARIES})
